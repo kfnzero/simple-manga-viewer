@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' file:; style-src 'self' 'unsafe-inline';" />
+  <title>Simple Manga Viewer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Top Toolbar -->
+  <div id="toolbar">
+    <button id="btn-open" title="開啟目錄 (Ctrl+O)">📁 開啟目錄</button>
+    <div class="toolbar-separator"></div>
+
+    <label class="toolbar-label">顯示模式:</label>
+    <select id="select-fit-mode">
+      <option value="fit-width">適合寬度</option>
+      <option value="fit-height">適合高度</option>
+      <option value="custom-width">指定寬度</option>
+    </select>
+    <input type="number" id="input-custom-width" value="800" min="200" max="4000" step="50"
+           placeholder="寬度 px" style="display:none;" />
+
+    <div class="toolbar-separator"></div>
+
+    <label class="toolbar-label">頁面:</label>
+    <select id="select-page-mode">
+      <option value="single">單頁</option>
+      <option value="double">雙頁</option>
+    </select>
+
+    <div class="toolbar-separator"></div>
+
+    <button id="btn-prev" title="上一頁 (PageUp / ←)">◀ 上一頁</button>
+    <span id="page-indicator">0 / 0</span>
+    <button id="btn-next" title="下一頁 (PageDown / →)">下一頁 ▶</button>
+
+    <div class="toolbar-separator"></div>
+    <button id="btn-help" title="快捷鍵說明">⌨ 快捷鍵</button>
+  </div>
+
+  <div id="main-container">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div id="sidebar-header">
+        <button id="btn-parent" title="上層目錄">⬆ 上層</button>
+        <span id="sidebar-title">目錄瀏覽</span>
+      </div>
+      <div id="sidebar-list"></div>
+    </div>
+
+    <div id="sidebar-resizer"></div>
+
+    <!-- Viewer Area -->
+    <div id="viewer-area">
+      <div id="viewer-container">
+        <div id="welcome-message">
+          <h2>Simple Manga Viewer</h2>
+          <p>點擊「開啟目錄」選擇漫畫資料夾開始閱讀</p>
+          <p class="shortcut-hint">快捷鍵: Ctrl+O</p>
+        </div>
+        <div id="image-display" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="help-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>快捷鍵說明</h3>
+      <table>
+        <tr><td><kbd>Ctrl+O</kbd></td><td>開啟目錄</td></tr>
+        <tr><td><kbd>←</kbd> / <kbd>PageUp</kbd></td><td>上一頁</td></tr>
+        <tr><td><kbd>→</kbd> / <kbd>PageDown</kbd></td><td>下一頁</td></tr>
+        <tr><td><kbd>↑</kbd></td><td>向上捲動</td></tr>
+        <tr><td><kbd>↓</kbd></td><td>向下捲動</td></tr>
+        <tr><td><kbd>Home</kbd></td><td>第一頁</td></tr>
+        <tr><td><kbd>End</kbd></td><td>最後一頁</td></tr>
+        <tr><td><kbd>1</kbd></td><td>單頁模式</td></tr>
+        <tr><td><kbd>2</kbd></td><td>雙頁模式</td></tr>
+        <tr><td><kbd>W</kbd></td><td>適合寬度</td></tr>
+        <tr><td><kbd>H</kbd></td><td>適合高度</td></tr>
+        <tr><td><kbd>F</kbd> / <kbd>F11</kbd></td><td>全螢幕切換</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>關閉對話框 / 退出全螢幕</td></tr>
+      </table>
+      <button id="btn-close-help">關閉</button>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+{
+  "name": "simple-manga-viewer",
+  "version": "1.0.0",
+  "description": "A simple cross-platform manga/comic viewer",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build": "electron-builder --win --mac"
+  },
+  "build": {
+    "appId": "com.simple-manga-viewer.app",
+    "productName": "Simple Manga Viewer",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "styles.css",
+      "icons/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  }
+}
