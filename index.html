@@ -28,6 +28,7 @@
     <select id="select-page-mode">
       <option value="single">單頁</option>
       <option value="double">雙頁</option>
+      <option value="webtoon">垂直連續 (Webtoon)</option>
     </select>
 
     <div class="toolbar-separator"></div>
@@ -69,21 +70,40 @@
   <div id="help-modal" class="modal" style="display:none;">
     <div class="modal-content">
       <h3>快捷鍵說明</h3>
+
+      <p class="help-section-title">移動畫面（按住連續移動）</p>
       <table>
-        <tr><td><kbd>Ctrl+O</kbd></td><td>開啟目錄</td></tr>
-        <tr><td><kbd>←</kbd> / <kbd>PageUp</kbd></td><td>上一頁</td></tr>
-        <tr><td><kbd>→</kbd> / <kbd>PageDown</kbd></td><td>下一頁</td></tr>
-        <tr><td><kbd>↑</kbd></td><td>向上捲動</td></tr>
-        <tr><td><kbd>↓</kbd></td><td>向下捲動</td></tr>
+        <tr><td><kbd>W</kbd> / <kbd>S</kbd> / <kbd>A</kbd> / <kbd>D</kbd></td><td>上 / 下 / 左 / 右 移動</td></tr>
+        <tr><td><kbd>↑</kbd> / <kbd>↓</kbd></td><td>上 / 下 移動（同 W/S）</td></tr>
+      </table>
+
+      <p class="help-section-title">翻頁</p>
+      <table>
+        <tr><td><kbd>←</kbd> / <kbd>PageUp</kbd></td><td>上一頁 / 上一張</td></tr>
+        <tr><td><kbd>→</kbd> / <kbd>PageDown</kbd></td><td>下一頁 / 下一張</td></tr>
         <tr><td><kbd>Home</kbd></td><td>第一頁</td></tr>
         <tr><td><kbd>End</kbd></td><td>最後一頁</td></tr>
+      </table>
+
+      <p class="help-section-title">頁面模式</p>
+      <table>
         <tr><td><kbd>1</kbd></td><td>單頁模式</td></tr>
         <tr><td><kbd>2</kbd></td><td>雙頁模式</td></tr>
-        <tr><td><kbd>W</kbd></td><td>適合寬度</td></tr>
-        <tr><td><kbd>H</kbd></td><td>適合高度</td></tr>
+        <tr><td><kbd>3</kbd></td><td>垂直連續模式（Webtoon / 韓漫）</td></tr>
+      </table>
+
+      <p class="help-section-title">其他</p>
+      <table>
+        <tr><td><kbd>Ctrl+O</kbd></td><td>開啟目錄</td></tr>
+        <tr><td><kbd>H</kbd></td><td>切換適合高度</td></tr>
         <tr><td><kbd>F</kbd> / <kbd>F11</kbd></td><td>全螢幕切換</td></tr>
         <tr><td><kbd>Esc</kbd></td><td>關閉對話框 / 退出全螢幕</td></tr>
       </table>
+
+      <p class="help-keybinding-note">
+        💡 多組按鍵: 可在 <code>renderer.js</code> 頂部的 <code>keyBindings</code> 物件自由新增任意按鍵組合。
+      </p>
+
       <button id="btn-close-help">關閉</button>
     </div>
   </div>

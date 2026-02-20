@@ -260,6 +260,21 @@ body {
   justify-content: center;
 }
 
+/* Webtoon mode: vertical strip, all images stacked */
+#image-display.webtoon-mode {
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+}
+
+#image-display.webtoon-mode img {
+  display: block;
+  /* Remove any gap between images for seamless reading */
+  margin: 0;
+  padding: 0;
+}
+
 /* Scrollbar styling */
 #viewer-area::-webkit-scrollbar {
   width: 10px;
@@ -311,8 +326,10 @@ body {
   border: 1px solid #555;
   border-radius: 8px;
   padding: 24px;
-  max-width: 450px;
+  max-width: 480px;
   width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .modal-content h3 {
@@ -359,4 +376,32 @@ body {
 
 .modal-content button:hover {
   background: #1d4ed8;
+}
+
+.help-section-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 12px 0 4px;
+}
+
+.help-section-title:first-of-type {
+  margin-top: 0;
+}
+
+.help-keybinding-note {
+  font-size: 12px;
+  color: #888;
+  margin: 12px 0 16px;
+  line-height: 1.5;
+}
+
+.help-keybinding-note code {
+  background: #3a3a3a;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #ccc;
 }
