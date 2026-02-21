@@ -1,6 +1,6 @@
 {
   "name": "simple-manga-viewer",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "A simple cross-platform manga/comic viewer",
   "author": "kfnzero",
   "main": "main.js",
@@ -13,6 +13,7 @@
   "build": {
     "appId": "com.simple-manga-viewer.app",
     "productName": "Simple Manga Viewer",
+    "afterPack": "./build-scripts/afterPack.js",
     "files": [
       "main.js",
       "preload.js",
@@ -21,10 +22,29 @@
       "styles.css",
       "icons/**/*"
     ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "bmp",
+          "webp",
+          "tiff",
+          "tif",
+          "avif"
+        ],
+        "name": "Image File",
+        "description": "Open with Simple Manga Viewer",
+        "role": "Viewer"
+      }
+    ],
     "win": {
       "target": "nsis",
       "icon": "icons/icon.png",
-      "signAndEditExecutable": false
+      "signAndEditExecutable": false,
+      "executableName": "Simple Manga Viewer"
     },
     "mac": {
       "target": "dmg"
@@ -32,6 +52,7 @@
   },
   "devDependencies": {
     "electron": "^33.0.0",
-    "electron-builder": "^25.0.0"
+    "electron-builder": "^25.0.0",
+    "rcedit": "^4.0.1"
   }
 }

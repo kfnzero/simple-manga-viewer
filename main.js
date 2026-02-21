@@ -3,10 +3,48 @@ const path = require('path');
 const fs = require('fs');
 
 let mainWindow;
+let pendingFilePath = null; // 從命令列或第二實例傳入的圖片路徑
 
 const IMAGE_EXTENSIONS = new Set([
   '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.tif', '.avif'
 ]);
+
+// 從命令列參數中取得圖片檔案路徑
+function getImagePathFromArgs(argv) {
+  // 打包後: ["app.exe", "C:\path\image.jpg"]
+  // 開發中: ["electron.exe", ".", "C:\path\image.jpg"]
+  for (let i = 1; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg.startsWith('-') || arg.startsWith('--')) continue;
+    if (arg === '.') continue; // 開發模式的 electron .
+    const ext = path.extname(arg).toLowerCase();
+    if (IMAGE_EXTENSIONS.has(ext)) {
+      const resolved = path.resolve(arg);
+      try {
+        if (fs.existsSync(resolved)) return resolved;
+      } catch { /* ignore */ }
+    }
+  }
+  return null;
+}
+
+// 單一實例鎖定：若已有實例在執行，將路徑傳給它
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (_event, argv) => {
+    const filePath = getImagePathFromArgs(argv);
+    if (filePath && mainWindow) {
+      mainWindow.webContents.send('open-file', filePath);
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
+
+// 記錄啟動時的命令列參數
+pendingFilePath = getImagePathFromArgs(process.argv);
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -24,6 +62,14 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
+
+  // 頁面載入完成後，若有待開啟的圖片則傳送給 renderer
+  mainWindow.webContents.on('did-finish-load', () => {
+    if (pendingFilePath) {
+      mainWindow.webContents.send('open-file', pendingFilePath);
+      pendingFilePath = null;
+    }
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -95,6 +141,14 @@ ipcMain.handle('get-subdirectories', async (_event, dirPath) => {
     return [];
   }
 });
+
+// Get directory of a file
+ipcMain.handle('get-file-directory', async (_event, filePath) => {
+  return path.dirname(filePath);
+});
+
+// Get app version
+ipcMain.handle('get-version', () => app.getVersion());
 
 // Get parent directory
 ipcMain.handle('get-parent-directory', async (_event, dirPath) => {

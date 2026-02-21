@@ -668,3 +668,31 @@ document.addEventListener('mouseup', () => {
 window.addEventListener('resize', () => {
   if (state.images.length > 0) renderCurrent();
 });
+
+// ──────────────────────────────────────────────
+//  從檔案總管開啟圖片：載入所在目錄並跳到對應頁
+// ──────────────────────────────────────────────
+
+async function openFileFromPath(filePath) {
+  const dirPath = await window.mangaAPI.getFileDirectory(filePath);
+  if (!dirPath) return;
+  const result = await window.mangaAPI.loadDirectory(dirPath);
+  if (!result) return;
+  loadResult(result);
+  // 找到對應圖片並跳到該頁（路徑正規化比對）
+  const normalized = filePath.replace(/\//g, '\\');
+  const idx = state.images.findIndex((img) => img.path.replace(/\//g, '\\') === normalized);
+  if (idx >= 0) {
+    state.currentPage = idx;
+    renderCurrent();
+  }
+}
+
+// 載入版本資訊到 Help 視窗
+window.mangaAPI.getVersion().then((ver) => {
+  document.getElementById('app-version').textContent = `Simple Manga Viewer v${ver}`;
+});
+
+window.mangaAPI.onOpenFile((filePath) => {
+  openFileFromPath(filePath);
+});

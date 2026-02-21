@@ -423,6 +423,12 @@ body {
   line-height: 1.5;
 }
 
+.help-version {
+  font-size: 12px;
+  color: #999;
+  margin: 4px 0 12px;
+}
+
 .help-keybinding-note code {
   background: #3a3a3a;
   padding: 1px 5px;
