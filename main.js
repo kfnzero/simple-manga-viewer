@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -76,7 +76,43 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+
+  const menuTemplate = [
+    {
+      label: '檔案',
+      submenu: [
+        {
+          label: '開啟目錄',
+          accelerator: 'CmdOrCtrl+O',
+          click: () => mainWindow && mainWindow.webContents.send('menu-open-directory'),
+        },
+        { type: 'separator' },
+        { role: 'quit', label: '結束' },
+      ],
+    },
+    {
+      label: '說明',
+      submenu: [
+        {
+          label: '關於',
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: '關於 Simple Manga Viewer',
+              message: 'Simple Manga Viewer',
+              detail: `版本: v${app.getVersion()}\n作者: kfnzero`,
+              buttons: ['確定'],
+            });
+          },
+        },
+      ],
+    },
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

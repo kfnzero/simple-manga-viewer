@@ -693,6 +693,10 @@ window.mangaAPI.getVersion().then((ver) => {
   document.getElementById('app-version').textContent = `Simple Manga Viewer v${ver}`;
 });
 
+window.mangaAPI.onMenuOpenDirectory(() => {
+  openDirectory();
+});
+
 window.mangaAPI.onOpenFile((filePath) => {
   openFileFromPath(filePath);
 });

@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld('mangaAPI', {
   getParentDirectory: (dirPath) => ipcRenderer.invoke('get-parent-directory', dirPath),
   getVersion: () => ipcRenderer.invoke('get-version'),
   onOpenFile: (callback) => ipcRenderer.on('open-file', (_event, filePath) => callback(filePath)),
+  onMenuOpenDirectory: (callback) => ipcRenderer.on('menu-open-directory', () => callback()),
 });
