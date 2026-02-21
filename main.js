@@ -69,7 +69,7 @@ ipcMain.handle('load-directory', async (_event, dirPath) => {
   }
 });
 
-// Get subdirectories for the sidebar
+// Get subdirectories and image files for the sidebar
 ipcMain.handle('get-subdirectories', async (_event, dirPath) => {
   try {
     const entries = fs.readdirSync(dirPath, { withFileTypes: true });
@@ -78,9 +78,18 @@ ipcMain.handle('get-subdirectories', async (_event, dirPath) => {
       .map((e) => ({
         name: e.name,
         path: path.join(dirPath, e.name),
+        type: 'directory',
       }))
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-    return dirs;
+    const files = entries
+      .filter((e) => e.isFile() && IMAGE_EXTENSIONS.has(path.extname(e.name).toLowerCase()))
+      .map((e) => ({
+        name: e.name,
+        path: path.join(dirPath, e.name),
+        type: 'image',
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    return [...dirs, ...files];
   } catch {
     return [];
   }

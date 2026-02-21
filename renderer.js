@@ -78,20 +78,34 @@ function loadResult(result) {
 }
 
 async function loadSubdirectories(dirPath) {
-  const dirs = await window.mangaAPI.getSubdirectories(dirPath);
+  const entries = await window.mangaAPI.getSubdirectories(dirPath);
   sidebarTitle.textContent = dirPath.split(/[\\/]/).pop() || dirPath;
   sidebarTitle.title = dirPath;
   sidebarList.innerHTML = '';
-  dirs.forEach((dir) => {
+  entries.forEach((entry) => {
     const item = document.createElement('div');
-    item.className = 'dir-item';
-    item.innerHTML = `<span class="dir-icon">📁</span>${dir.name}`;
-    item.title = dir.path;
-    item.addEventListener('click', () => {
-      loadDirectoryByPath(dir.path);
-      document.querySelectorAll('.dir-item').forEach((el) => el.classList.remove('active'));
-      item.classList.add('active');
-    });
+    item.title = entry.path;
+    if (entry.type === 'directory') {
+      item.className = 'dir-item';
+      item.innerHTML = `<span class="dir-icon">📁</span>${entry.name}`;
+      item.addEventListener('click', () => {
+        loadDirectoryByPath(entry.path);
+        document.querySelectorAll('.dir-item').forEach((el) => el.classList.remove('active'));
+        item.classList.add('active');
+      });
+    } else {
+      item.className = 'dir-item file-item';
+      item.innerHTML = `<span class="dir-icon">🖼️</span>${entry.name}`;
+      item.addEventListener('click', () => {
+        const idx = state.images.findIndex((img) => img.path === entry.path);
+        if (idx >= 0) {
+          state.currentPage = idx;
+          renderCurrent();
+        }
+        document.querySelectorAll('.dir-item').forEach((el) => el.classList.remove('active'));
+        item.classList.add('active');
+      });
+    }
     sidebarList.appendChild(item);
   });
 }
