@@ -21,7 +21,8 @@
       "icons/**/*"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "icons/icon.png"
     },
     "mac": {
       "target": "dmg"

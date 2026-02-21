@@ -38,6 +38,11 @@
     <button id="btn-next" title="下一頁 (PageDown / →)">下一頁 ▶</button>
 
     <div class="toolbar-separator"></div>
+    <button id="btn-slideshow" title="幻燈片播放 (P)">▶ 幻燈片</button>
+    <input type="number" id="input-slideshow-interval" value="5" min="1" max="60" step="1" title="播放間隔（秒）" style="width:50px;" />
+    <span class="toolbar-label">秒</span>
+
+    <div class="toolbar-separator"></div>
     <button id="btn-help" title="快捷鍵說明">⌨ 快捷鍵</button>
   </div>
 
@@ -95,7 +100,10 @@
       <p class="help-section-title">其他</p>
       <table>
         <tr><td><kbd>Ctrl+O</kbd></td><td>開啟目錄</td></tr>
-        <tr><td><kbd>H</kbd></td><td>切換適合高度</td></tr>
+        <tr><td><kbd>H</kbd></td><td>切換適合寬度 / 適合高度</td></tr>
+        <tr><td><kbd>+</kbd> / <kbd>=</kbd></td><td>放大圖像</td></tr>
+        <tr><td><kbd>-</kbd></td><td>縮小圖像</td></tr>
+        <tr><td><kbd>P</kbd></td><td>幻燈片播放 / 停止</td></tr>
         <tr><td><kbd>F</kbd> / <kbd>F11</kbd></td><td>全螢幕切換</td></tr>
         <tr><td><kbd>Esc</kbd></td><td>關閉對話框 / 退出全螢幕</td></tr>
       </table>

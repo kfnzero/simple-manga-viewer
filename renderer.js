@@ -15,9 +15,14 @@ const keyBindings = {
   nextPage:  ['ArrowRight', 'PageDown'], // 下一頁
   firstPage: ['Home'],
   lastPage:  ['End'],
+  zoomIn:    ['+', '='],               // 放大
+  zoomOut:   ['-'],                     // 縮小
+  toggleFit: ['h', 'H'],               // 切換適合寬度/適合高度
 };
 
 const PAN_SPEED = 10; // pixels per animation frame
+const ZOOM_STEP = 0.1; // 每次縮放比例
+let slideshowTimer = null; // 幻燈片計時器
 
 // ── State ──
 const state = {
@@ -53,6 +58,8 @@ const sidebarList     = document.getElementById('sidebar-list');
 const sidebarTitle    = document.getElementById('sidebar-title');
 const sidebarResizer  = document.getElementById('sidebar-resizer');
 const sidebar         = document.getElementById('sidebar');
+const btnSlideshow    = document.getElementById('btn-slideshow');
+const inputSlideshowInterval = document.getElementById('input-slideshow-interval');
 
 // ──────────────────────────────────────────────
 //  Directory & Image Loading
@@ -149,28 +156,46 @@ function renderPage() {
 
   welcomeMessage.style.display = 'none';
   imageDisplay.style.display = 'flex';
-  imageDisplay.innerHTML = '';
-  imageDisplay.className = `${state.fitMode} ${state.pageMode === 'double' ? 'double-page' : 'single-page'}`;
 
   const pagesToShow = state.pageMode === 'double' ? 2 : 1;
-  for (let i = 0; i < pagesToShow; i++) {
-    const idx = state.currentPage + i;
-    if (idx >= state.images.length) break;
-    const img = document.createElement('img');
-    img.src = state.images[idx].url;
-    img.alt = state.images[idx].name;
-    img.draggable = false;
-    applyFitStyle(img, pagesToShow);
-    imageDisplay.appendChild(img);
-  }
-
   const endPage = Math.min(state.currentPage + pagesToShow, state.images.length);
   pageIndicator.textContent = pagesToShow === 1
     ? `${state.currentPage + 1} / ${state.images.length}`
     : `${state.currentPage + 1}–${endPage} / ${state.images.length}`;
 
-  viewerArea.scrollTop = 0;
-  viewerArea.scrollLeft = 0;
+  // Fade out with blur
+  imageDisplay.classList.add('page-transitioning');
+
+  const swap = () => {
+    imageDisplay.innerHTML = '';
+    imageDisplay.className = `${state.fitMode} ${state.pageMode === 'double' ? 'double-page' : 'single-page'} page-transitioning`;
+
+    for (let i = 0; i < pagesToShow; i++) {
+      const idx = state.currentPage + i;
+      if (idx >= state.images.length) break;
+      const img = document.createElement('img');
+      img.src = state.images[idx].url;
+      img.alt = state.images[idx].name;
+      img.draggable = false;
+      applyFitStyle(img, pagesToShow);
+      imageDisplay.appendChild(img);
+    }
+
+    viewerArea.scrollTop = 0;
+    viewerArea.scrollLeft = 0;
+
+    // Fade in after a frame
+    requestAnimationFrame(() => {
+      imageDisplay.classList.remove('page-transitioning');
+    });
+  };
+
+  // If first render (no children), skip fade-out wait
+  if (imageDisplay.children.length === 0) {
+    swap();
+  } else {
+    setTimeout(swap, 120);
+  }
 }
 
 // Webtoon mode: render all images in a vertical strip
@@ -363,14 +388,23 @@ document.addEventListener('keydown', (e) => {
   } else if (keyBindings.lastPage.includes(e.key)) {
     e.preventDefault();
     lastPage();
+  } else if (keyBindings.zoomIn.includes(e.key)) {
+    e.preventDefault();
+    zoomIn();
+  } else if (keyBindings.zoomOut.includes(e.key)) {
+    e.preventDefault();
+    zoomOut();
+  } else if (keyBindings.toggleFit.includes(e.key)) {
+    e.preventDefault();
+    toggleFit();
   } else {
     switch (e.key) {
       case '1': setPageMode('single');  break;
       case '2': setPageMode('double');  break;
       case '3': setPageMode('webtoon'); break;
-      case 'h':
-      case 'H':
-        setFitMode('fit-height');
+      case 'p':
+      case 'P':
+        toggleSlideshow();
         break;
       case 'f':
       case 'F':
@@ -423,6 +457,71 @@ function setFitMode(mode) {
   renderCurrent();
 }
 
+function zoomIn() {
+  const currentImg = imageDisplay.querySelector('img');
+  if (!currentImg) return;
+  const currentWidth = currentImg.getBoundingClientRect().width;
+  state.customWidth = Math.round(currentWidth * (1 + ZOOM_STEP));
+  state.fitMode = 'custom-width';
+  selectFitMode.value = 'custom-width';
+  inputCustomWidth.value = state.customWidth;
+  inputCustomWidth.style.display = 'inline-block';
+  renderCurrent();
+}
+
+function zoomOut() {
+  const currentImg = imageDisplay.querySelector('img');
+  if (!currentImg) return;
+  const currentWidth = currentImg.getBoundingClientRect().width;
+  state.customWidth = Math.max(50, Math.round(currentWidth * (1 - ZOOM_STEP)));
+  state.fitMode = 'custom-width';
+  selectFitMode.value = 'custom-width';
+  inputCustomWidth.value = state.customWidth;
+  inputCustomWidth.style.display = 'inline-block';
+  renderCurrent();
+}
+
+function toggleFit() {
+  if (state.fitMode === 'fit-width') {
+    setFitMode('fit-height');
+  } else {
+    setFitMode('fit-width');
+  }
+}
+
+function toggleSlideshow() {
+  if (slideshowTimer) {
+    stopSlideshow();
+  } else {
+    startSlideshow();
+  }
+}
+
+function startSlideshow() {
+  if (state.images.length === 0) return;
+  const interval = (parseInt(inputSlideshowInterval.value, 10) || 5) * 1000;
+  btnSlideshow.textContent = '⏸ 停止';
+  btnSlideshow.classList.add('slideshow-active');
+  slideshowTimer = setInterval(() => {
+    const step = state.pageMode === 'double' ? 2 : 1;
+    if (state.currentPage + step < state.images.length) {
+      nextPage();
+    } else {
+      // 播放到最後一頁，自動停止
+      stopSlideshow();
+    }
+  }, interval);
+}
+
+function stopSlideshow() {
+  if (slideshowTimer) {
+    clearInterval(slideshowTimer);
+    slideshowTimer = null;
+  }
+  btnSlideshow.textContent = '▶ 幻燈片';
+  btnSlideshow.classList.remove('slideshow-active');
+}
+
 function toggleFullscreen() {
   if (document.fullscreenElement) {
     document.exitFullscreen();
@@ -448,6 +547,8 @@ inputCustomWidth.addEventListener('change', () => {
 });
 
 selectPageMode.addEventListener('change', () => setPageMode(selectPageMode.value));
+
+btnSlideshow.addEventListener('click', toggleSlideshow);
 
 btnHelp.addEventListener('click', () => { helpModal.style.display = 'flex'; });
 btnCloseHelp.addEventListener('click', () => { helpModal.style.display = 'none'; });

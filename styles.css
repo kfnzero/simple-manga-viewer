@@ -66,6 +66,11 @@ body {
   white-space: nowrap;
 }
 
+.slideshow-active {
+  background: #e74c3c !important;
+  color: #fff !important;
+}
+
 .toolbar-separator {
   width: 1px;
   height: 24px;
@@ -241,6 +246,12 @@ body {
   align-items: flex-start;
   gap: 2px;
   padding: 0;
+  transition: opacity 0.15s ease, filter 0.15s ease;
+}
+
+#image-display.page-transitioning {
+  opacity: 0.3;
+  filter: blur(6px);
 }
 
 #image-display img {
