@@ -2,6 +2,8 @@ const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+app.setAppUserModelId('com.simple-manga-viewer.app');
+
 let mainWindow;
 let pendingFilePath = null; // 從命令列或第二實例傳入的圖片路徑
 

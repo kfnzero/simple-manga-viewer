@@ -1,6 +1,6 @@
 {
   "name": "simple-manga-viewer",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A simple cross-platform manga/comic viewer",
   "author": "kfnzero",
   "main": "main.js",
@@ -13,6 +13,7 @@
   "build": {
     "appId": "com.simple-manga-viewer.app",
     "productName": "Simple Manga Viewer",
+    "copyright": "Copyright (C) 2025 kfnzero",
     "afterPack": "./build-scripts/afterPack.js",
     "files": [
       "main.js",
@@ -44,7 +45,8 @@
       "target": "nsis",
       "icon": "icons/icon.png",
       "signAndEditExecutable": false,
-      "executableName": "Simple Manga Viewer"
+      "executableName": "Simple Manga Viewer",
+      "legalTrademarks": ""
     },
     "mac": {
       "target": "dmg"
