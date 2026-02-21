@@ -24,6 +24,9 @@ const PAN_SPEED = 10; // pixels per animation frame
 const ZOOM_STEP = 0.1; // 每次縮放比例
 let slideshowTimer = null; // 幻燈片計時器
 
+// 各目錄的側邊欄捲動位置，回到上層時還原
+const sidebarScrollPositions = {};
+
 // ── State ──
 const state = {
   images: [],
@@ -76,6 +79,9 @@ async function loadDirectoryByPath(dirPath) {
 }
 
 function loadResult(result) {
+  if (state.currentDirectory) {
+    sidebarScrollPositions[state.currentDirectory] = sidebarList.scrollTop;
+  }
   state.images = result.images;
   state.currentPage = 0;
   state.currentDirectory = result.directory;
@@ -115,6 +121,9 @@ async function loadSubdirectories(dirPath) {
     }
     sidebarList.appendChild(item);
   });
+  if (dirPath in sidebarScrollPositions) {
+    sidebarList.scrollTop = sidebarScrollPositions[dirPath];
+  }
 }
 
 async function goParentDirectory() {
