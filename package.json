@@ -2,6 +2,7 @@
   "name": "simple-manga-viewer",
   "version": "1.0.0",
   "description": "A simple cross-platform manga/comic viewer",
+  "author": "kfnzero",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -22,7 +23,8 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "icons/icon.png"
+      "icon": "icons/icon.png",
+      "signAndEditExecutable": false
     },
     "mac": {
       "target": "dmg"
