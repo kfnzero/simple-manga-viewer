@@ -1,6 +1,6 @@
 {
   "name": "simple-manga-viewer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple cross-platform manga/comic viewer",
   "author": "kfnzero",
   "main": "main.js",
