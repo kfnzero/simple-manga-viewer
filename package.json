@@ -44,7 +44,10 @@
     "win": {
       "target": "nsis",
       "icon": "icons/icon.png",
-      "signAndEditExecutable": false,
+      "signAndEditExecutable": true,
+      "signtoolOptions": {
+        "sign": "./build-scripts/skip-sign.js"
+      },
       "executableName": "Simple Manga Viewer",
       "legalTrademarks": ""
     },

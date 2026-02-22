@@ -41,6 +41,14 @@ npm start
 
 ## 打包建置
 
+### 前置需求（Windows）
+
+Windows 環境編譯前需開啟**開發人員模式**，否則 electron-builder 會因無法建立 symlink 而失敗：
+
+**設定 → 系統 → 開發人員 → 開發人員模式 → 開啟**
+
+### 建置指令
+
 ```bash
 # 建置 Windows 安裝檔（NSIS）
 npm run build:win
