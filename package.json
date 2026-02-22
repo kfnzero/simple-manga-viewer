@@ -3,6 +3,14 @@
   "version": "2.1.0",
   "description": "A simple cross-platform manga/comic viewer",
   "author": "kfnzero",
+  "homepage": "https://github.com/kfnzero/simple-manga-viewer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kfnzero/simple-manga-viewer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kfnzero/simple-manga-viewer/issues"
+  },
   "main": "main.js",
   "scripts": {
     "start": "electron .",
