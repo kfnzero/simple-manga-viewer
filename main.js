@@ -7,6 +7,26 @@ app.setAppUserModelId('com.simple-manga-viewer.app');
 let mainWindow;
 let pendingFilePath = null; // 從命令列或第二實例傳入的圖片路徑
 
+const windowStateFile = path.join(app.getPath('userData'), 'window-state.json');
+
+function loadWindowState() {
+  try {
+    return JSON.parse(fs.readFileSync(windowStateFile, 'utf-8'));
+  } catch {
+    return null;
+  }
+}
+
+function saveWindowState(win) {
+  if (!win || win.isDestroyed()) return;
+  const isMaximized = win.isMaximized();
+  const bounds = isMaximized ? win._lastNormalBounds || win.getNormalBounds() : win.getBounds();
+  const state = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height, isMaximized };
+  try {
+    fs.writeFileSync(windowStateFile, JSON.stringify(state));
+  } catch { /* ignore */ }
+}
+
 const IMAGE_EXTENSIONS = new Set([
   '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.tif', '.avif'
 ]);
@@ -49,9 +69,10 @@ if (!gotTheLock) {
 pendingFilePath = getImagePathFromArgs(process.argv);
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 900,
+  const savedState = loadWindowState();
+  const windowOptions = {
+    width: savedState?.width || 1200,
+    height: savedState?.height || 900,
     minWidth: 600,
     minHeight: 400,
     title: 'Simple Manga Viewer',
@@ -61,6 +82,40 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
+  };
+
+  if (savedState?.x != null && savedState?.y != null) {
+    windowOptions.x = savedState.x;
+    windowOptions.y = savedState.y;
+  }
+
+  mainWindow = new BrowserWindow(windowOptions);
+
+  if (savedState?.isMaximized) {
+    mainWindow.maximize();
+  }
+
+  // debounce 儲存視窗狀態
+  let saveTimeout;
+  const debouncedSave = () => {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => saveWindowState(mainWindow), 500);
+  };
+
+  mainWindow.on('resize', () => {
+    if (!mainWindow.isMaximized()) {
+      mainWindow._lastNormalBounds = mainWindow.getBounds();
+    }
+    debouncedSave();
+  });
+  mainWindow.on('move', () => {
+    if (!mainWindow.isMaximized()) {
+      mainWindow._lastNormalBounds = mainWindow.getBounds();
+    }
+    debouncedSave();
+  });
+  mainWindow.on('close', () => {
+    saveWindowState(mainWindow);
   });
 
   mainWindow.loadFile('index.html');

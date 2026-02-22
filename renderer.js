@@ -508,7 +508,7 @@ function toggleSlideshow() {
 
 function startSlideshow() {
   if (state.images.length === 0) return;
-  const interval = (parseInt(inputSlideshowInterval.value, 10) || 5) * 1000;
+  const interval = parseInt(inputSlideshowInterval.value, 10) || 500;
   btnSlideshow.textContent = '⏸ 停止';
   btnSlideshow.classList.add('slideshow-active');
   slideshowTimer = setInterval(() => {
