@@ -13,5 +13,6 @@ user-invocable: true
    - 詢問使用者要升級哪個版本層級（patch/minor/major），預設建議 patch
    - 更新 `package.json` 中的 `version` 欄位
    - 將 `package.json` 的變更一併加入 commit
+   - 打上tag，直接以version字串標示，不需要加上v，保持一致性
 4. 使用 git-commit skill 進行 commit
 5. Push 到遠端
