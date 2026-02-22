@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const AdmZip = require('adm-zip');
 
 app.setAppUserModelId('com.simple-manga-viewer.app');
 
@@ -31,7 +32,9 @@ const IMAGE_EXTENSIONS = new Set([
   '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.tif', '.avif'
 ]);
 
-// 從命令列參數中取得圖片檔案路徑
+const ARCHIVE_EXTENSIONS = new Set(['.zip', '.cbz']);
+
+// 從命令列參數中取得圖片檔案或壓縮檔路徑
 function getImagePathFromArgs(argv) {
   // 打包後: ["app.exe", "C:\path\image.jpg"]
   // 開發中: ["electron.exe", ".", "C:\path\image.jpg"]
@@ -40,7 +43,7 @@ function getImagePathFromArgs(argv) {
     if (arg.startsWith('-') || arg.startsWith('--')) continue;
     if (arg === '.') continue; // 開發模式的 electron .
     const ext = path.extname(arg).toLowerCase();
-    if (IMAGE_EXTENSIONS.has(ext)) {
+    if (IMAGE_EXTENSIONS.has(ext) || ARCHIVE_EXTENSIONS.has(ext)) {
       const resolved = path.resolve(arg);
       try {
         if (fs.existsSync(resolved)) return resolved;
@@ -141,7 +144,7 @@ app.whenReady().then(() => {
       label: '檔案',
       submenu: [
         {
-          label: '開啟目錄',
+          label: '開啟目錄或壓縮檔',
           accelerator: 'CmdOrCtrl+O',
           click: () => mainWindow && mainWindow.webContents.send('menu-open-directory'),
         },
@@ -173,8 +176,13 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    clearTempDir(); // 清理暫存的壓縮檔目錄
     app.quit();
   }
+});
+
+app.on('will-quit', () => {
+  clearTempDir();
 });
 
 app.on('activate', () => {
@@ -183,30 +191,85 @@ app.on('activate', () => {
   }
 });
 
-// Open directory dialog
+// 解壓縮暫存資料夾
+const tempExtractDir = path.join(app.getPath('temp'), 'simple-manga-viewer-extract');
+
+function clearTempDir() {
+  if (fs.existsSync(tempExtractDir)) {
+    try {
+      fs.rmSync(tempExtractDir, { recursive: true, force: true });
+    } catch { }
+  }
+}
+
+function handleLoadPath(targetPath) {
+  try {
+    const stat = fs.statSync(targetPath);
+    if (stat.isDirectory()) {
+      return loadImagesFromDirectory(targetPath);
+    } else if (stat.isFile() && ARCHIVE_EXTENSIONS.has(path.extname(targetPath).toLowerCase())) {
+      return extractAndLoadArchive(targetPath);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function extractAndLoadArchive(archivePath) {
+  try {
+    clearTempDir();
+    fs.mkdirSync(tempExtractDir, { recursive: true });
+
+    const zip = new AdmZip(archivePath);
+    const zipEntries = zip.getEntries();
+
+    zipEntries.forEach((entry) => {
+      if (!entry.isDirectory) {
+        const ext = path.extname(entry.name).toLowerCase();
+        if (IMAGE_EXTENSIONS.has(ext)) {
+          // 將原路徑的斜線轉換成底線以扁平化且好排序
+          const outName = entry.entryName.replace(/[\\/]/g, '_');
+          const outPath = path.join(tempExtractDir, outName);
+          fs.writeFileSync(outPath, entry.getData());
+        }
+      }
+    });
+
+    const result = loadImagesFromDirectory(tempExtractDir);
+    if (result) {
+      result.directoryName = path.basename(archivePath);
+      result.originalArchive = archivePath;
+    }
+    return result;
+  } catch (e) {
+    console.error('Error extracting archive:', e);
+    return null;
+  }
+}
+
+// Open directory or file dialog
 ipcMain.handle('open-directory', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
-    properties: ['openDirectory'],
-    title: '選擇漫畫目錄',
+    properties: ['openFile', 'openDirectory'],
+    title: '選擇漫畫目錄或壓縮檔 (.zip, .cbz)',
+    filters: [
+      { name: '漫畫與目錄', extensions: ['zip', 'cbz'] },
+      { name: '所有檔案', extensions: ['*'] }
+    ]
   });
 
   if (result.canceled || result.filePaths.length === 0) {
     return null;
   }
 
-  const dirPath = result.filePaths[0];
-  return loadImagesFromDirectory(dirPath);
+  const selectedPath = result.filePaths[0];
+  return handleLoadPath(selectedPath);
 });
 
-// Load images from a given directory path
-ipcMain.handle('load-directory', async (_event, dirPath) => {
-  try {
-    const stat = fs.statSync(dirPath);
-    if (!stat.isDirectory()) return null;
-    return loadImagesFromDirectory(dirPath);
-  } catch {
-    return null;
-  }
+// Load images from a given path (directory or archive)
+ipcMain.handle('load-directory', async (_event, targetPath) => {
+  return handleLoadPath(targetPath);
 });
 
 // Get subdirectories and image files for the sidebar

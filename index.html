@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' file:; style-src 'self' 'unsafe-inline';" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; img-src 'self' file:; style-src 'self' 'unsafe-inline';" />
   <title>Simple Manga Viewer</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <!-- Top Toolbar -->
   <div id="toolbar">
-    <button id="btn-open" title="開啟目錄 (Ctrl+O)">📁 開啟目錄</button>
+    <button id="btn-open" title="開啟目錄或壓縮檔 (Ctrl+O)">📁 開啟</button>
     <div class="toolbar-separator"></div>
 
     <label class="toolbar-label">顯示模式:</label>
@@ -19,8 +22,8 @@
       <option value="fit-height">適合高度</option>
       <option value="custom-width">指定寬度</option>
     </select>
-    <input type="number" id="input-custom-width" value="800" min="200" max="4000" step="50"
-           placeholder="寬度 px" style="display:none;" />
+    <input type="number" id="input-custom-width" value="800" min="200" max="4000" step="50" placeholder="寬度 px"
+      style="display:none;" />
 
     <div class="toolbar-separator"></div>
 
@@ -39,7 +42,8 @@
 
     <div class="toolbar-separator"></div>
     <button id="btn-slideshow" title="幻燈片播放 (P)">▶ 幻燈片</button>
-    <input type="number" id="input-slideshow-interval" value="500" min="100" max="60000" step="100" title="播放間隔（毫秒）" style="width:65px;" />
+    <input type="number" id="input-slideshow-interval" value="500" min="100" max="60000" step="100" title="播放間隔（毫秒）"
+      style="width:65px;" />
     <span class="toolbar-label">ms</span>
 
     <div class="toolbar-separator"></div>
@@ -81,34 +85,82 @@
 
       <p class="help-section-title">移動畫面（按住連續移動）</p>
       <table>
-        <tr><td><kbd>W</kbd> / <kbd>S</kbd> / <kbd>A</kbd> / <kbd>D</kbd></td><td>上 / 下 / 左 / 右 移動</td></tr>
-        <tr><td><kbd>↑</kbd> / <kbd>↓</kbd></td><td>上 / 下 移動（同 W/S）</td></tr>
+        <tr>
+          <td><kbd>W</kbd> / <kbd>S</kbd> / <kbd>A</kbd> / <kbd>D</kbd></td>
+          <td>上 / 下 / 左 / 右 移動</td>
+        </tr>
+        <tr>
+          <td><kbd>↑</kbd> / <kbd>↓</kbd></td>
+          <td>上 / 下 移動（同 W/S）</td>
+        </tr>
       </table>
 
       <p class="help-section-title">翻頁</p>
       <table>
-        <tr><td><kbd>←</kbd> / <kbd>PageUp</kbd></td><td>上一頁 / 上一張</td></tr>
-        <tr><td><kbd>→</kbd> / <kbd>PageDown</kbd></td><td>下一頁 / 下一張</td></tr>
-        <tr><td><kbd>Home</kbd></td><td>第一頁</td></tr>
-        <tr><td><kbd>End</kbd></td><td>最後一頁</td></tr>
+        <tr>
+          <td><kbd>←</kbd> / <kbd>PageUp</kbd></td>
+          <td>上一頁 / 上一張</td>
+        </tr>
+        <tr>
+          <td><kbd>→</kbd> / <kbd>PageDown</kbd></td>
+          <td>下一頁 / 下一張</td>
+        </tr>
+        <tr>
+          <td><kbd>Home</kbd></td>
+          <td>第一頁</td>
+        </tr>
+        <tr>
+          <td><kbd>End</kbd></td>
+          <td>最後一頁</td>
+        </tr>
       </table>
 
       <p class="help-section-title">頁面模式</p>
       <table>
-        <tr><td><kbd>1</kbd></td><td>單頁模式</td></tr>
-        <tr><td><kbd>2</kbd></td><td>雙頁模式</td></tr>
-        <tr><td><kbd>3</kbd></td><td>垂直連續模式（Webtoon / 韓漫）</td></tr>
+        <tr>
+          <td><kbd>1</kbd></td>
+          <td>單頁模式</td>
+        </tr>
+        <tr>
+          <td><kbd>2</kbd></td>
+          <td>雙頁模式</td>
+        </tr>
+        <tr>
+          <td><kbd>3</kbd></td>
+          <td>垂直連續模式（Webtoon / 韓漫）</td>
+        </tr>
       </table>
 
       <p class="help-section-title">其他</p>
       <table>
-        <tr><td><kbd>Ctrl+O</kbd></td><td>開啟目錄</td></tr>
-        <tr><td><kbd>H</kbd></td><td>切換適合寬度 / 適合高度</td></tr>
-        <tr><td><kbd>+</kbd> / <kbd>=</kbd></td><td>放大圖像</td></tr>
-        <tr><td><kbd>-</kbd></td><td>縮小圖像</td></tr>
-        <tr><td><kbd>P</kbd></td><td>幻燈片播放 / 停止</td></tr>
-        <tr><td><kbd>F</kbd> / <kbd>F11</kbd></td><td>全螢幕切換</td></tr>
-        <tr><td><kbd>Esc</kbd></td><td>關閉對話框 / 退出全螢幕</td></tr>
+        <tr>
+          <td><kbd>Ctrl+O</kbd></td>
+          <td>開啟目錄</td>
+        </tr>
+        <tr>
+          <td><kbd>H</kbd></td>
+          <td>切換適合寬度 / 適合高度</td>
+        </tr>
+        <tr>
+          <td><kbd>+</kbd> / <kbd>=</kbd></td>
+          <td>放大圖像</td>
+        </tr>
+        <tr>
+          <td><kbd>-</kbd></td>
+          <td>縮小圖像</td>
+        </tr>
+        <tr>
+          <td><kbd>P</kbd></td>
+          <td>幻燈片播放 / 停止</td>
+        </tr>
+        <tr>
+          <td><kbd>F</kbd> / <kbd>F11</kbd></td>
+          <td>全螢幕切換</td>
+        </tr>
+        <tr>
+          <td><kbd>Esc</kbd></td>
+          <td>關閉對話框 / 退出全螢幕</td>
+        </tr>
       </table>
 
       <p class="help-keybinding-note">
@@ -123,4 +175,5 @@
 
   <script src="renderer.js"></script>
 </body>
+
 </html>

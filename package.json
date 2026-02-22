@@ -59,5 +59,8 @@
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
     "rcedit": "^4.0.1"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16"
   }
 }

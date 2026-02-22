@@ -7,16 +7,16 @@
 //  https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values
 // ──────────────────────────────────────────────
 const keyBindings = {
-  panUp:     ['w', 'W', 'ArrowUp'],    // 向上移動畫面
-  panDown:   ['s', 'S', 'ArrowDown'],  // 向下移動畫面
-  panLeft:   ['a', 'A'],               // 向左移動畫面
-  panRight:  ['d', 'D'],               // 向右移動畫面
-  prevPage:  ['ArrowLeft', 'PageUp'],  // 上一頁
-  nextPage:  ['ArrowRight', 'PageDown'], // 下一頁
+  panUp: ['w', 'W', 'ArrowUp'],    // 向上移動畫面
+  panDown: ['s', 'S', 'ArrowDown'],  // 向下移動畫面
+  panLeft: ['a', 'A'],               // 向左移動畫面
+  panRight: ['d', 'D'],               // 向右移動畫面
+  prevPage: ['ArrowLeft', 'PageUp'],  // 上一頁
+  nextPage: ['ArrowRight', 'PageDown'], // 下一頁
   firstPage: ['Home'],
-  lastPage:  ['End'],
-  zoomIn:    ['+', '='],               // 放大
-  zoomOut:   ['-'],                     // 縮小
+  lastPage: ['End'],
+  zoomIn: ['+', '='],               // 放大
+  zoomOut: ['-'],                     // 縮小
   toggleFit: ['h', 'H'],               // 切換適合寬度/適合高度
 };
 
@@ -37,32 +37,38 @@ const state = {
   currentDirectory: null,
   isDragging: false,
   dragStartX: 0,
-  dragStartY: 0,
   scrollStartX: 0,
   scrollStartY: 0,
 };
 
+function setCurrentPage(page) {
+  state.currentPage = page;
+  if (state.currentDirectory && state.images && state.images.length > 0) {
+    localStorage.setItem(`manga_progress_${state.currentDirectory}`, state.currentPage.toString());
+  }
+}
+
 // ── DOM Elements ──
-const btnOpen         = document.getElementById('btn-open');
-const btnPrev         = document.getElementById('btn-prev');
-const btnNext         = document.getElementById('btn-next');
-const btnFullscreen   = document.getElementById('btn-fullscreen');
-const btnHelp         = document.getElementById('btn-help');
-const btnCloseHelp    = document.getElementById('btn-close-help');
-const btnParent       = document.getElementById('btn-parent');
-const selectFitMode   = document.getElementById('select-fit-mode');
+const btnOpen = document.getElementById('btn-open');
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
+const btnFullscreen = document.getElementById('btn-fullscreen');
+const btnHelp = document.getElementById('btn-help');
+const btnCloseHelp = document.getElementById('btn-close-help');
+const btnParent = document.getElementById('btn-parent');
+const selectFitMode = document.getElementById('select-fit-mode');
 const inputCustomWidth = document.getElementById('input-custom-width');
-const selectPageMode  = document.getElementById('select-page-mode');
-const pageIndicator   = document.getElementById('page-indicator');
-const viewerArea      = document.getElementById('viewer-area');
-const imageDisplay    = document.getElementById('image-display');
-const welcomeMessage  = document.getElementById('welcome-message');
-const helpModal       = document.getElementById('help-modal');
-const sidebarList     = document.getElementById('sidebar-list');
-const sidebarTitle    = document.getElementById('sidebar-title');
-const sidebarResizer  = document.getElementById('sidebar-resizer');
-const sidebar         = document.getElementById('sidebar');
-const btnSlideshow    = document.getElementById('btn-slideshow');
+const selectPageMode = document.getElementById('select-page-mode');
+const pageIndicator = document.getElementById('page-indicator');
+const viewerArea = document.getElementById('viewer-area');
+const imageDisplay = document.getElementById('image-display');
+const welcomeMessage = document.getElementById('welcome-message');
+const helpModal = document.getElementById('help-modal');
+const sidebarList = document.getElementById('sidebar-list');
+const sidebarTitle = document.getElementById('sidebar-title');
+const sidebarResizer = document.getElementById('sidebar-resizer');
+const sidebar = document.getElementById('sidebar');
+const btnSlideshow = document.getElementById('btn-slideshow');
 const inputSlideshowInterval = document.getElementById('input-slideshow-interval');
 
 // ──────────────────────────────────────────────
@@ -84,10 +90,17 @@ function loadResult(result) {
     sidebarScrollPositions[state.currentDirectory] = sidebarList.scrollTop;
   }
   state.images = result.images;
-  state.currentPage = 0;
+
+  // 載入該目錄先前的閱讀進度
+  const savedProg = localStorage.getItem(`manga_progress_${result.directory}`);
+  let page = savedProg ? parseInt(savedProg, 10) || 0 : 0;
+  if (page >= state.images.length) page = 0;
+  state.currentPage = page;
+
   state.currentDirectory = result.directory;
   document.title = `${result.directoryName} - Simple Manga Viewer`;
   loadSubdirectories(result.directory);
+  setCurrentPage(state.currentPage); // 更新狀態
   renderCurrent();
 }
 
@@ -113,7 +126,7 @@ async function loadSubdirectories(dirPath) {
       item.addEventListener('click', () => {
         const idx = state.images.findIndex((img) => img.path === entry.path);
         if (idx >= 0) {
-          state.currentPage = idx;
+          setCurrentPage(idx);
           renderCurrent();
         }
         document.querySelectorAll('.dir-item').forEach((el) => el.classList.remove('active'));
@@ -136,8 +149,14 @@ async function goParentDirectory() {
     const result = await window.mangaAPI.loadDirectory(parent);
     if (result) {
       state.images = result.images;
-      state.currentPage = 0;
+
+      const savedProg = localStorage.getItem(`manga_progress_${result.directory}`);
+      let page = savedProg ? parseInt(savedProg, 10) || 0 : 0;
+      if (page >= state.images.length) page = 0;
+      state.currentPage = page;
+
       document.title = `${result.directoryName} - Simple Manga Viewer`;
+      setCurrentPage(state.currentPage);
       renderCurrent();
     }
   }
@@ -197,7 +216,7 @@ function renderPage() {
     // Fade in after a frame
     requestAnimationFrame(() => {
       imageDisplay.classList.remove('page-transitioning');
-      
+
       // 預載下一頁（一到兩張圖片）
       preloadNextImages();
     });
@@ -221,7 +240,7 @@ function preloadNextImages() {
     img1.src = state.images[nextIdx].url;
     if (state.pageMode === 'double' && nextIdx + 1 < state.images.length) {
       const img2 = new Image();
-      img2.src = state.images[nextIdx+1].url;
+      img2.src = state.images[nextIdx + 1].url;
     }
   }
 }
@@ -265,15 +284,15 @@ function applyFitStyle(img, pageCount) {
   const vw = viewerArea.clientWidth;
   const vh = viewerArea.clientHeight;
   if (state.fitMode === 'fit-width') {
-    img.style.width  = `${Math.floor(vw / pageCount)}px`;
+    img.style.width = `${Math.floor(vw / pageCount)}px`;
     img.style.height = 'auto';
     img.style.maxWidth = 'none';
   } else if (state.fitMode === 'fit-height') {
     img.style.height = `${vh}px`;
-    img.style.width  = 'auto';
+    img.style.width = 'auto';
     img.style.maxWidth = 'none';
   } else if (state.fitMode === 'custom-width') {
-    img.style.width  = `${Math.floor(state.customWidth / pageCount)}px`;
+    img.style.width = `${Math.floor(state.customWidth / pageCount)}px`;
     img.style.height = 'auto';
     img.style.maxWidth = 'none';
   }
@@ -299,7 +318,7 @@ function nextPage() {
   if (state.pageMode === 'webtoon') {
     const next = state.currentPage + 1;
     if (next < state.images.length) {
-      state.currentPage = next;
+      setCurrentPage(next);
       updatePageIndicator();
       scrollToImage(next);
     }
@@ -307,7 +326,7 @@ function nextPage() {
   }
   const step = state.pageMode === 'double' ? 2 : 1;
   if (state.currentPage + step < state.images.length) {
-    state.currentPage += step;
+    setCurrentPage(state.currentPage + step);
     renderPage();
   }
 }
@@ -317,20 +336,20 @@ function prevPage() {
   if (state.pageMode === 'webtoon') {
     const prev = state.currentPage - 1;
     if (prev >= 0) {
-      state.currentPage = prev;
+      setCurrentPage(prev);
       updatePageIndicator();
       scrollToImage(prev);
     }
     return;
   }
   const step = state.pageMode === 'double' ? 2 : 1;
-  state.currentPage = Math.max(0, state.currentPage - step);
+  setCurrentPage(Math.max(0, state.currentPage - step));
   renderPage();
 }
 
 function firstPage() {
   if (state.images.length === 0) return;
-  state.currentPage = 0;
+  setCurrentPage(0);
   if (state.pageMode === 'webtoon') {
     updatePageIndicator();
     viewerArea.scrollTo({ top: 0, behavior: 'smooth' });
@@ -342,17 +361,17 @@ function firstPage() {
 function lastPage() {
   if (state.images.length === 0) return;
   if (state.pageMode === 'webtoon') {
-    state.currentPage = state.images.length - 1;
+    setCurrentPage(state.images.length - 1);
     updatePageIndicator();
     scrollToImage(state.currentPage);
   } else if (state.pageMode === 'double') {
     let last = state.images.length - 2;
     if (last < 0) last = 0;
     if (last % 2 !== 0) last = Math.max(0, last - 1);
-    state.currentPage = last;
+    setCurrentPage(last);
     renderPage();
   } else {
-    state.currentPage = state.images.length - 1;
+    setCurrentPage(state.images.length - 1);
     renderPage();
   }
 }
@@ -377,12 +396,12 @@ function panLoop() {
   if (heldKeys.size > 0) {
     let dx = 0;
     let dy = 0;
-    if (keyBindings.panUp.some((k) => heldKeys.has(k)))    dy -= PAN_SPEED;
-    if (keyBindings.panDown.some((k) => heldKeys.has(k)))  dy += PAN_SPEED;
-    if (keyBindings.panLeft.some((k) => heldKeys.has(k)))  dx -= PAN_SPEED;
+    if (keyBindings.panUp.some((k) => heldKeys.has(k))) dy -= PAN_SPEED;
+    if (keyBindings.panDown.some((k) => heldKeys.has(k))) dy += PAN_SPEED;
+    if (keyBindings.panLeft.some((k) => heldKeys.has(k))) dx -= PAN_SPEED;
     if (keyBindings.panRight.some((k) => heldKeys.has(k))) dx += PAN_SPEED;
     if (dx !== 0) viewerArea.scrollLeft += dx;
-    if (dy !== 0) viewerArea.scrollTop  += dy;
+    if (dy !== 0) viewerArea.scrollTop += dy;
   }
   requestAnimationFrame(panLoop);
 }
@@ -427,8 +446,8 @@ document.addEventListener('keydown', (e) => {
     toggleFit();
   } else {
     switch (e.key) {
-      case '1': setPageMode('single');  break;
-      case '2': setPageMode('double');  break;
+      case '1': setPageMode('single'); break;
+      case '2': setPageMode('double'); break;
       case '3': setPageMode('webtoon'); break;
       case 'p':
       case 'P':
@@ -473,7 +492,7 @@ function setPageMode(mode) {
   state.pageMode = mode;
   selectPageMode.value = mode;
   if (mode === 'double' && state.currentPage % 2 !== 0) {
-    state.currentPage = Math.max(0, state.currentPage - 1);
+    setCurrentPage(Math.max(0, state.currentPage - 1));
   }
   renderCurrent();
 }
@@ -593,11 +612,11 @@ viewerArea.addEventListener('wheel', (e) => {
   // In webtoon mode let native scroll handle everything
   if (state.pageMode === 'webtoon') return;
 
-  const atTop    = viewerArea.scrollTop <= 0;
+  const atTop = viewerArea.scrollTop <= 0;
   const atBottom = viewerArea.scrollTop + viewerArea.clientHeight >= viewerArea.scrollHeight - 2;
 
-  if (e.deltaY > 0 && atBottom)      nextPage();
-  else if (e.deltaY < 0 && atTop)    prevPage();
+  if (e.deltaY > 0 && atBottom) nextPage();
+  else if (e.deltaY < 0 && atTop) prevPage();
 });
 
 // ──────────────────────────────────────────────
@@ -618,7 +637,7 @@ function updateWebtoonCurrentPage() {
 
   // Find image whose centre is closest to the viewport centre
   const viewerMid = viewerArea.scrollTop + viewerArea.clientHeight / 2;
-  let closestIdx  = 0;
+  let closestIdx = 0;
   let closestDist = Infinity;
 
   imgs.forEach((img, idx) => {
@@ -627,7 +646,7 @@ function updateWebtoonCurrentPage() {
   });
 
   if (closestIdx !== state.currentPage) {
-    state.currentPage = closestIdx;
+    setCurrentPage(closestIdx);
     updatePageIndicator();
   }
 }
@@ -638,9 +657,9 @@ function updateWebtoonCurrentPage() {
 
 viewerArea.addEventListener('mousedown', (e) => {
   if (e.button !== 0) return;
-  state.isDragging  = true;
-  state.dragStartX  = e.clientX;
-  state.dragStartY  = e.clientY;
+  state.isDragging = true;
+  state.dragStartX = e.clientX;
+  state.dragStartY = e.clientY;
   state.scrollStartX = viewerArea.scrollLeft;
   state.scrollStartY = viewerArea.scrollTop;
   viewerArea.classList.add('dragging');
@@ -649,7 +668,7 @@ viewerArea.addEventListener('mousedown', (e) => {
 document.addEventListener('mousemove', (e) => {
   if (!state.isDragging) return;
   viewerArea.scrollLeft = state.scrollStartX - (e.clientX - state.dragStartX);
-  viewerArea.scrollTop  = state.scrollStartY - (e.clientY - state.dragStartY);
+  viewerArea.scrollTop = state.scrollStartY - (e.clientY - state.dragStartY);
 });
 
 document.addEventListener('mouseup', () => {
@@ -712,7 +731,7 @@ async function openFileFromPath(filePath) {
   const normalized = filePath.replace(/\//g, '\\');
   const idx = state.images.findIndex((img) => img.path.replace(/\//g, '\\') === normalized);
   if (idx >= 0) {
-    state.currentPage = idx;
+    setCurrentPage(idx);
     renderCurrent();
     // 捲動側邊欄到對應檔案並高亮
     const fileItems = sidebarList.querySelectorAll('.file-item');
@@ -754,7 +773,7 @@ document.body.addEventListener('dragover', (e) => {
 document.body.addEventListener('drop', (e) => {
   e.preventDefault();
   e.stopPropagation();
-  
+
   if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
     const filePath = e.dataTransfer.files[0].path;
     handleDroppedFile(filePath);
