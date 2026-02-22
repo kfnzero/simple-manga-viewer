@@ -6,19 +6,67 @@
 //  Key names follow the KeyboardEvent.key spec:
 //  https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values
 // ──────────────────────────────────────────────
-const keyBindings = {
-  panUp: ['w', 'W', 'ArrowUp'],    // 向上移動畫面
-  panDown: ['s', 'S', 'ArrowDown'],  // 向下移動畫面
-  panLeft: ['a', 'A'],               // 向左移動畫面
-  panRight: ['d', 'D'],               // 向右移動畫面
-  prevPage: ['ArrowLeft', 'PageUp'],  // 上一頁
-  nextPage: ['ArrowRight', 'PageDown'], // 下一頁
+const defaultKeyBindings = {
+  panUp: ['w', 'W', 'ArrowUp'],
+  panDown: ['s', 'S', 'ArrowDown'],
+  panLeft: ['a', 'A'],
+  panRight: ['d', 'D'],
+  prevPage: ['ArrowLeft', 'PageUp'],
+  nextPage: ['ArrowRight', 'PageDown'],
   firstPage: ['Home'],
   lastPage: ['End'],
-  zoomIn: ['+', '='],               // 放大
-  zoomOut: ['-'],                     // 縮小
-  toggleFit: ['h', 'H'],               // 切換適合寬度/適合高度
+  zoomIn: ['+', '='],
+  zoomOut: ['-'],
+  toggleFit: ['h', 'H'],
+  toggleSlideshow: ['p', 'P'],
+  toggleFullscreen: ['f', 'F', 'F11'],
+  singlePage: ['1'],
+  doublePage: ['2'],
+  webtoonMode: ['3'],
 };
+
+// 各動作的中文標籤
+const keyBindingLabels = {
+  panUp: '向上移動',
+  panDown: '向下移動',
+  panLeft: '向左移動',
+  panRight: '向右移動',
+  prevPage: '上一頁',
+  nextPage: '下一頁',
+  firstPage: '第一頁',
+  lastPage: '最後一頁',
+  zoomIn: '放大',
+  zoomOut: '縮小',
+  toggleFit: '切換適合寬度/高度',
+  toggleSlideshow: '幻燈片播放/停止',
+  toggleFullscreen: '全螢幕切換',
+  singlePage: '單頁模式',
+  doublePage: '雙頁模式',
+  webtoonMode: '垂直連續模式',
+};
+
+// 從 localStorage 載入自訂快捷鍵，若無則使用預設
+function loadKeyBindings() {
+  try {
+    const saved = localStorage.getItem('manga_keybindings');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // 與預設值合併，以確保新增的動作也包含在內
+      const merged = {};
+      for (const action of Object.keys(defaultKeyBindings)) {
+        merged[action] = Array.isArray(parsed[action]) ? parsed[action] : [...defaultKeyBindings[action]];
+      }
+      return merged;
+    }
+  } catch { }
+  return JSON.parse(JSON.stringify(defaultKeyBindings));
+}
+
+function saveKeyBindings() {
+  localStorage.setItem('manga_keybindings', JSON.stringify(keyBindings));
+}
+
+let keyBindings = loadKeyBindings();
 
 const PAN_SPEED = 10; // pixels per animation frame
 const ZOOM_STEP = 0.1; // 每次縮放比例
@@ -413,12 +461,21 @@ function lastPage() {
 const heldKeys = new Set();
 
 // Flat set of all pan-related keys for quick lookup
-const allPanKeys = new Set([
+let allPanKeys = new Set([
   ...keyBindings.panUp,
   ...keyBindings.panDown,
   ...keyBindings.panLeft,
   ...keyBindings.panRight,
 ]);
+
+function rebuildPanKeys() {
+  allPanKeys = new Set([
+    ...keyBindings.panUp,
+    ...keyBindings.panDown,
+    ...keyBindings.panLeft,
+    ...keyBindings.panRight,
+  ]);
+}
 
 function panLoop() {
   if (heldKeys.size > 0) {
@@ -441,6 +498,10 @@ requestAnimationFrame(panLoop);
 
 document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+  // 快捷鍵設定視窗開啟時，不處理一般快捷鍵
+  const keybindModal = document.getElementById('keybind-modal');
+  if (keybindModal && keybindModal.style.display !== 'none') return;
 
   // Hold-to-pan keys: add to heldKeys and prevent default browser scroll
   if (allPanKeys.has(e.key)) {
@@ -472,21 +533,19 @@ document.addEventListener('keydown', (e) => {
   } else if (keyBindings.toggleFit.includes(e.key)) {
     e.preventDefault();
     toggleFit();
+  } else if (keyBindings.toggleSlideshow.includes(e.key)) {
+    toggleSlideshow();
+  } else if (keyBindings.toggleFullscreen.includes(e.key)) {
+    e.preventDefault();
+    toggleFullscreen();
+  } else if (keyBindings.singlePage.includes(e.key)) {
+    setPageMode('single');
+  } else if (keyBindings.doublePage.includes(e.key)) {
+    setPageMode('double');
+  } else if (keyBindings.webtoonMode.includes(e.key)) {
+    setPageMode('webtoon');
   } else {
     switch (e.key) {
-      case '1': setPageMode('single'); break;
-      case '2': setPageMode('double'); break;
-      case '3': setPageMode('webtoon'); break;
-      case 'p':
-      case 'P':
-        toggleSlideshow();
-        break;
-      case 'f':
-      case 'F':
-      case 'F11':
-        e.preventDefault();
-        toggleFullscreen();
-        break;
       case 'o':
       case 'O':
         if (e.ctrlKey || e.metaKey) {
@@ -642,7 +701,7 @@ selectPageMode.addEventListener('change', () => { setPageMode(selectPageMode.val
 btnSlideshow.addEventListener('click', () => { toggleSlideshow(); btnSlideshow.blur(); });
 btnFullscreen.addEventListener('click', () => { toggleFullscreen(); btnFullscreen.blur(); });
 
-btnHelp.addEventListener('click', () => { helpModal.style.display = 'flex'; });
+btnHelp.addEventListener('click', () => { renderHelpModal(); helpModal.style.display = 'flex'; });
 btnCloseHelp.addEventListener('click', () => { helpModal.style.display = 'none'; });
 helpModal.addEventListener('click', (e) => {
   if (e.target === helpModal) helpModal.style.display = 'none';
@@ -835,12 +894,183 @@ document.body.addEventListener('drop', (e) => {
 });
 
 async function handleDroppedFile(filePath) {
-  // 嘗試以資料夾方式載入
   const result = await window.mangaAPI.loadDirectory(filePath);
   if (result) {
     loadResult(result);
   } else {
-    // 若並非資料夾，則作為檔案直接打開
     openFileFromPath(filePath);
   }
 }
+
+// ──────────────────────────────────────────────
+//  Help Modal 動態生成
+// ──────────────────────────────────────────────
+
+// 將按鍵名稱轉換為可讀的顯示文字
+function formatKeyName(key) {
+  const map = {
+    'ArrowUp': '↑', 'ArrowDown': '↓', 'ArrowLeft': '←', 'ArrowRight': '→',
+    'PageUp': 'PgUp', 'PageDown': 'PgDn',
+    ' ': 'Space', 'Escape': 'Esc',
+  };
+  return map[key] || key;
+}
+
+function renderHelpModal() {
+  const container = document.getElementById('help-keybindings-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const table = document.createElement('table');
+  for (const [action, keys] of Object.entries(keyBindings)) {
+    const label = keyBindingLabels[action] || action;
+    const keysStr = keys.map(k => `<kbd>${formatKeyName(k)}</kbd>`).join(' / ');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${keysStr || '<span style="color:#666">未設定</span>'}</td><td>${label}</td>`;
+    table.appendChild(tr);
+  }
+
+  // 加上固定的 Ctrl+O 和 Esc
+  const extraKeys = [
+    { keys: 'Ctrl+O', label: '開啟目錄' },
+    { keys: 'Esc', label: '關閉對話框 / 退出全螢幕' },
+  ];
+  extraKeys.forEach(({ keys, label }) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><kbd>${keys}</kbd></td><td>${label}</td>`;
+    table.appendChild(tr);
+  });
+
+  container.appendChild(table);
+}
+
+// ──────────────────────────────────────────────
+//  快捷鍵設定 Modal
+// ──────────────────────────────────────────────
+
+const keybindModal = document.getElementById('keybind-modal');
+const keybindList = document.getElementById('keybind-list');
+const btnKeybindSettings = document.getElementById('btn-keybind-settings');
+const btnKeybindReset = document.getElementById('btn-keybind-reset');
+const btnKeybindClose = document.getElementById('btn-keybind-close');
+
+let listeningAction = null; // 目前正在錄製按鍵的動作
+let listeningBtn = null;  // 目前正在錄製的按鈕元素
+
+function renderKeybindList() {
+  keybindList.innerHTML = '';
+  for (const [action, keys] of Object.entries(keyBindings)) {
+    const label = keyBindingLabels[action] || action;
+    const row = document.createElement('div');
+    row.className = 'keybind-row';
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'keybind-action-label';
+    labelEl.textContent = label;
+    row.appendChild(labelEl);
+
+    const keysContainer = document.createElement('div');
+    keysContainer.className = 'keybind-keys';
+
+    keys.forEach((key, idx) => {
+      const tag = document.createElement('span');
+      tag.className = 'keybind-key-tag';
+      tag.innerHTML = `${formatKeyName(key)}<span class="remove-key" data-action="${action}" data-idx="${idx}">✕</span>`;
+      keysContainer.appendChild(tag);
+    });
+
+    // 新增按鍵按鈕
+    const addBtn = document.createElement('span');
+    addBtn.className = 'keybind-add-btn';
+    addBtn.textContent = '+';
+    addBtn.title = '新增按鍵綁定';
+    addBtn.dataset.action = action;
+    addBtn.addEventListener('click', () => startListening(action, addBtn));
+    keysContainer.appendChild(addBtn);
+
+    row.appendChild(keysContainer);
+    keybindList.appendChild(row);
+  }
+}
+
+function startListening(action, btn) {
+  // 取消上次的錄製
+  stopListening();
+  listeningAction = action;
+  listeningBtn = btn;
+  btn.classList.add('listening');
+  btn.textContent = '…';
+}
+
+function stopListening() {
+  if (listeningBtn) {
+    listeningBtn.classList.remove('listening');
+    listeningBtn.textContent = '+';
+  }
+  listeningAction = null;
+  listeningBtn = null;
+}
+
+function removeKey(action, idx) {
+  if (keyBindings[action]) {
+    keyBindings[action].splice(idx, 1);
+    saveKeyBindings();
+    rebuildPanKeys();
+    renderKeybindList();
+  }
+}
+
+// 快捷鍵錄製監聽
+document.addEventListener('keydown', (e) => {
+  if (!listeningAction) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  const key = e.key;
+  // 忽略單純的修飾鍵
+  if (['Control', 'Alt', 'Shift', 'Meta'].includes(key)) return;
+
+  // 檢查是否已存在
+  if (!keyBindings[listeningAction].includes(key)) {
+    keyBindings[listeningAction].push(key);
+    saveKeyBindings();
+    rebuildPanKeys();
+  }
+
+  stopListening();
+  renderKeybindList();
+}, true); // 使用 capture 確保優先捕獲
+
+// 點擊「✕」移除單一按鍵
+keybindList.addEventListener('click', (e) => {
+  if (e.target.classList.contains('remove-key')) {
+    const action = e.target.dataset.action;
+    const idx = parseInt(e.target.dataset.idx, 10);
+    removeKey(action, idx);
+  }
+});
+
+btnKeybindSettings.addEventListener('click', () => {
+  renderKeybindList();
+  keybindModal.style.display = 'flex';
+  btnKeybindSettings.blur();
+});
+
+btnKeybindClose.addEventListener('click', () => {
+  stopListening();
+  keybindModal.style.display = 'none';
+});
+
+keybindModal.addEventListener('click', (e) => {
+  if (e.target === keybindModal) {
+    stopListening();
+    keybindModal.style.display = 'none';
+  }
+});
+
+btnKeybindReset.addEventListener('click', () => {
+  keyBindings = JSON.parse(JSON.stringify(defaultKeyBindings));
+  saveKeyBindings();
+  rebuildPanKeys();
+  renderKeybindList();
+});

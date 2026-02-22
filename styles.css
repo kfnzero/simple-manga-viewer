@@ -435,3 +435,128 @@ body {
   font-size: 11px;
   color: #ccc;
 }
+
+/* Keybind Settings Modal */
+.keybind-settings-content {
+  max-width: 560px;
+}
+
+.keybind-hint {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+#keybind-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.keybind-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #3a3a3a;
+  gap: 12px;
+}
+
+.keybind-row:last-child {
+  border-bottom: none;
+}
+
+.keybind-action-label {
+  width: 140px;
+  font-size: 13px;
+  color: #ccc;
+  flex-shrink: 0;
+}
+
+.keybind-keys {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.keybind-key-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #3a3a3a;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-family: monospace;
+  color: #e0e0e0;
+}
+
+.keybind-key-tag .remove-key {
+  cursor: pointer;
+  color: #888;
+  font-size: 14px;
+  line-height: 1;
+  margin-left: 2px;
+}
+
+.keybind-key-tag .remove-key:hover {
+  color: #e74c3c;
+}
+
+.keybind-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #2a2a2a;
+  border: 1px dashed #666;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #888;
+  font-size: 16px;
+  transition: all 0.15s ease;
+}
+
+.keybind-add-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.keybind-add-btn.listening {
+  border-color: #e74c3c;
+  color: #e74c3c;
+  background: #3a1a1a;
+  animation: keybind-pulse 1s ease-in-out infinite;
+}
+
+@keyframes keybind-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.keybind-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.keybind-actions .btn-secondary {
+  background: #3a3a3a;
+  color: #ccc;
+  border: 1px solid #555;
+}
+
+.keybind-actions .btn-secondary:hover {
+  background: #4a4a4a;
+}
