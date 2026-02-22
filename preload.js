@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('mangaAPI', {
   openDirectory: () => ipcRenderer.invoke('open-directory'),
+  openArchive: () => ipcRenderer.invoke('open-archive'),
   loadDirectory: (dirPath) => ipcRenderer.invoke('load-directory', dirPath),
   getSubdirectories: (dirPath) => ipcRenderer.invoke('get-subdirectories', dirPath),
   getFileDirectory: (filePath) => ipcRenderer.invoke('get-file-directory', filePath),

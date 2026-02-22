@@ -248,13 +248,28 @@ function extractAndLoadArchive(archivePath) {
   }
 }
 
-// Open directory or file dialog
+// Open directory dialog
 ipcMain.handle('open-directory', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
-    properties: ['openFile', 'openDirectory'],
-    title: '選擇漫畫目錄或壓縮檔 (.zip, .cbz)',
+    properties: ['openDirectory'],
+    title: '選擇漫畫目錄'
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return null;
+  }
+
+  const selectedPath = result.filePaths[0];
+  return handleLoadPath(selectedPath);
+});
+
+// Open file (archive) dialog
+ipcMain.handle('open-archive', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    title: '選擇漫畫壓縮檔 (.zip, .cbz)',
     filters: [
-      { name: '漫畫與目錄', extensions: ['zip', 'cbz'] },
+      { name: '漫畫壓縮檔', extensions: ['zip', 'cbz'] },
       { name: '所有檔案', extensions: ['*'] }
     ]
   });
@@ -300,6 +315,7 @@ ipcMain.handle('get-subdirectories', async (_event, dirPath) => {
 
 // Get directory of a file
 ipcMain.handle('get-file-directory', async (_event, filePath) => {
+  if (typeof filePath !== 'string') return null;
   return path.dirname(filePath);
 });
 

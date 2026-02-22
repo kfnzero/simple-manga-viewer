@@ -49,7 +49,8 @@ function setCurrentPage(page) {
 }
 
 // ── DOM Elements ──
-const btnOpen = document.getElementById('btn-open');
+const btnOpenDir = document.getElementById('btn-open-dir');
+const btnOpenArchive = document.getElementById('btn-open-archive');
 const btnPrev = document.getElementById('btn-prev');
 const btnNext = document.getElementById('btn-next');
 const btnFullscreen = document.getElementById('btn-fullscreen');
@@ -77,6 +78,11 @@ const inputSlideshowInterval = document.getElementById('input-slideshow-interval
 
 async function openDirectory() {
   const result = await window.mangaAPI.openDirectory();
+  if (result) loadResult(result);
+}
+
+async function openArchive() {
+  const result = await window.mangaAPI.openArchive();
   if (result) loadResult(result);
 }
 
@@ -192,42 +198,64 @@ function renderPage() {
     ? `${state.currentPage + 1} / ${state.images.length}`
     : `${state.currentPage + 1}–${endPage} / ${state.images.length}`;
 
-  // Fade out with blur
+  // 套用模糊過渡效果 (不清除舊圖片)
   imageDisplay.classList.add('page-transitioning');
 
-  const swap = () => {
-    imageDisplay.innerHTML = '';
-    imageDisplay.className = `${state.fitMode} ${state.pageMode === 'double' ? 'double-page' : 'single-page'} page-transitioning`;
+  // 計算需要渲染圖片
+  const targetImages = [];
+  for (let i = 0; i < pagesToShow; i++) {
+    const idx = state.currentPage + i;
+    if (idx < state.images.length) {
+      targetImages.push(state.images[idx]);
+    }
+  }
 
-    for (let i = 0; i < pagesToShow; i++) {
-      const idx = state.currentPage + i;
-      if (idx >= state.images.length) break;
+  // 避免連續切換閃爍，稍微等待一幀再開始替換
+  requestAnimationFrame(() => {
+    let loadedCount = 0;
+    const requiredLoad = targetImages.length;
+
+    // 將新圖片換上
+    imageDisplay.className = `${state.fitMode} ${state.pageMode === 'double' ? 'double-page' : 'single-page'} page-transitioning`;
+    imageDisplay.innerHTML = ''; // 清除舊圖 換上新的(瀏覽器會保留舊畫面直到新圖載入覆蓋)
+
+    if (requiredLoad === 0) {
+      imageDisplay.classList.remove('page-transitioning');
+      return;
+    }
+
+    targetImages.forEach((imgData) => {
       const img = document.createElement('img');
-      img.src = state.images[idx].url;
-      img.alt = state.images[idx].name;
       img.draggable = false;
       applyFitStyle(img, pagesToShow);
+
+      // 當圖片載入完成
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount === requiredLoad) {
+          // 全部載入完畢，解除模糊
+          imageDisplay.classList.remove('page-transitioning');
+          preloadNextImages();
+        }
+      };
+
+      // 容錯機制
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === requiredLoad) {
+          imageDisplay.classList.remove('page-transitioning');
+          preloadNextImages();
+        }
+      }
+
+      img.src = imgData.url;
+      img.alt = imgData.name;
       imageDisplay.appendChild(img);
-    }
+    });
 
     viewerArea.scrollTop = 0;
     viewerArea.scrollLeft = 0;
-
-    // Fade in after a frame
-    requestAnimationFrame(() => {
-      imageDisplay.classList.remove('page-transitioning');
-
-      // 預載下一頁（一到兩張圖片）
-      preloadNextImages();
-    });
-  };
-
-  // If first render (no children), skip fade-out wait
-  if (imageDisplay.children.length === 0) {
-    swap();
-  } else {
-    setTimeout(swap, 120);
-  }
+  });
 }
 
 // 預載後續圖片以加速閱讀體驗
@@ -581,22 +609,38 @@ function toggleFullscreen() {
 //  Toolbar Event Listeners
 // ──────────────────────────────────────────────
 
-btnOpen.addEventListener('click', openDirectory);
-btnPrev.addEventListener('click', prevPage);
-btnNext.addEventListener('click', nextPage);
-btnParent.addEventListener('click', goParentDirectory);
+btnOpenDir.addEventListener('click', () => {
+  openDirectory();
+  btnOpenDir.blur();
+});
 
-selectFitMode.addEventListener('change', () => setFitMode(selectFitMode.value));
+btnOpenArchive.addEventListener('click', () => {
+  openArchive();
+  btnOpenArchive.blur();
+});
+btnPrev.addEventListener('click', () => { prevPage(); btnPrev.blur(); });
+btnNext.addEventListener('click', () => { nextPage(); btnNext.blur(); });
+btnParent.addEventListener('click', () => { goParentDirectory(); btnParent.blur(); });
+
+selectFitMode.addEventListener('change', () => { setFitMode(selectFitMode.value); selectFitMode.blur(); });
 
 inputCustomWidth.addEventListener('change', () => {
   state.customWidth = parseInt(inputCustomWidth.value, 10) || 800;
   if (state.fitMode === 'custom-width') renderCurrent();
+  inputCustomWidth.blur(); // 編輯完畢後取消聚焦
 });
 
-selectPageMode.addEventListener('change', () => setPageMode(selectPageMode.value));
+// 手動取消 enter 後的 input state (避免連續按下 spacebar 重複觸發
+inputCustomWidth.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    inputCustomWidth.blur();
+  }
+});
 
-btnSlideshow.addEventListener('click', toggleSlideshow);
-btnFullscreen.addEventListener('click', toggleFullscreen);
+selectPageMode.addEventListener('change', () => { setPageMode(selectPageMode.value); selectPageMode.blur(); });
+
+btnSlideshow.addEventListener('click', () => { toggleSlideshow(); btnSlideshow.blur(); });
+btnFullscreen.addEventListener('click', () => { toggleFullscreen(); btnFullscreen.blur(); });
 
 btnHelp.addEventListener('click', () => { helpModal.style.display = 'flex'; });
 btnCloseHelp.addEventListener('click', () => { helpModal.style.display = 'none'; });
@@ -768,6 +812,16 @@ document.body.addEventListener('dragover', (e) => {
   e.preventDefault();
   e.stopPropagation();
   e.dataTransfer.dropEffect = 'copy';
+});
+
+document.body.addEventListener('dragenter', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+});
+
+document.body.addEventListener('dragleave', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
 });
 
 document.body.addEventListener('drop', (e) => {

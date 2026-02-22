@@ -250,8 +250,7 @@ body {
 }
 
 #image-display.page-transitioning {
-  opacity: 0.3;
-  filter: blur(6px);
+  filter: blur(10px) brightness(0.9);
 }
 
 #image-display img {
