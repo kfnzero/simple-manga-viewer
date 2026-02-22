@@ -678,12 +678,32 @@ async function openFileFromPath(filePath) {
   if (!dirPath) return;
   const result = await window.mangaAPI.loadDirectory(dirPath);
   if (!result) return;
-  loadResult(result);
+  // 先載入目錄結果並等待側邊欄渲染完成
+  if (state.currentDirectory) {
+    sidebarScrollPositions[state.currentDirectory] = sidebarList.scrollTop;
+  }
+  state.images = result.images;
+  state.currentPage = 0;
+  state.currentDirectory = result.directory;
+  document.title = `${result.directoryName} - Simple Manga Viewer`;
+  await loadSubdirectories(result.directory);
+
   // 找到對應圖片並跳到該頁（路徑正規化比對）
   const normalized = filePath.replace(/\//g, '\\');
   const idx = state.images.findIndex((img) => img.path.replace(/\//g, '\\') === normalized);
   if (idx >= 0) {
     state.currentPage = idx;
+    renderCurrent();
+    // 捲動側邊欄到對應檔案並高亮
+    const fileItems = sidebarList.querySelectorAll('.file-item');
+    fileItems.forEach((item) => {
+      if (item.title === normalized || item.title.replace(/\//g, '\\') === normalized) {
+        document.querySelectorAll('.dir-item').forEach((el) => el.classList.remove('active'));
+        item.classList.add('active');
+        item.scrollIntoView({ block: 'center', behavior: 'instant' });
+      }
+    });
+  } else {
     renderCurrent();
   }
 }
