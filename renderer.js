@@ -46,6 +46,7 @@ const state = {
 const btnOpen         = document.getElementById('btn-open');
 const btnPrev         = document.getElementById('btn-prev');
 const btnNext         = document.getElementById('btn-next');
+const btnFullscreen   = document.getElementById('btn-fullscreen');
 const btnHelp         = document.getElementById('btn-help');
 const btnCloseHelp    = document.getElementById('btn-close-help');
 const btnParent       = document.getElementById('btn-parent');
@@ -196,6 +197,9 @@ function renderPage() {
     // Fade in after a frame
     requestAnimationFrame(() => {
       imageDisplay.classList.remove('page-transitioning');
+      
+      // 預載下一頁（一到兩張圖片）
+      preloadNextImages();
     });
   };
 
@@ -204,6 +208,21 @@ function renderPage() {
     swap();
   } else {
     setTimeout(swap, 120);
+  }
+}
+
+// 預載後續圖片以加速閱讀體驗
+function preloadNextImages() {
+  if (state.images.length === 0 || state.pageMode === 'webtoon') return;
+  const step = state.pageMode === 'double' ? 2 : 1;
+  const nextIdx = state.currentPage + step;
+  if (nextIdx < state.images.length) {
+    const img1 = new Image();
+    img1.src = state.images[nextIdx].url;
+    if (state.pageMode === 'double' && nextIdx + 1 < state.images.length) {
+      const img2 = new Image();
+      img2.src = state.images[nextIdx+1].url;
+    }
   }
 }
 
@@ -558,6 +577,7 @@ inputCustomWidth.addEventListener('change', () => {
 selectPageMode.addEventListener('change', () => setPageMode(selectPageMode.value));
 
 btnSlideshow.addEventListener('click', toggleSlideshow);
+btnFullscreen.addEventListener('click', toggleFullscreen);
 
 btnHelp.addEventListener('click', () => { helpModal.style.display = 'flex'; });
 btnCloseHelp.addEventListener('click', () => { helpModal.style.display = 'none'; });
@@ -720,3 +740,34 @@ window.mangaAPI.onMenuOpenDirectory(() => {
 window.mangaAPI.onOpenFile((filePath) => {
   openFileFromPath(filePath);
 });
+
+// ──────────────────────────────────────────────
+//  Drag and Drop
+// ──────────────────────────────────────────────
+
+document.body.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect = 'copy';
+});
+
+document.body.addEventListener('drop', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    const filePath = e.dataTransfer.files[0].path;
+    handleDroppedFile(filePath);
+  }
+});
+
+async function handleDroppedFile(filePath) {
+  // 嘗試以資料夾方式載入
+  const result = await window.mangaAPI.loadDirectory(filePath);
+  if (result) {
+    loadResult(result);
+  } else {
+    // 若並非資料夾，則作為檔案直接打開
+    openFileFromPath(filePath);
+  }
+}
